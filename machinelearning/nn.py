@@ -75,6 +75,11 @@ class Graph(object):
         so don't forget to call `self.add` on each of the variables.
         """
         "*** YOUR CODE HERE ***"
+        self.variables = variables
+        self.nodes = []
+        for var in variables:
+            self.add(var)
+        
 
     def get_nodes(self):
         """
@@ -85,8 +90,9 @@ class Graph(object):
         Returns: a list of nodes
         """
         "*** YOUR CODE HERE ***"
+        return self.nodes   
 
-    def get_inputs(self, node):
+    def get_inputs(self, node):         
         """
         Retrieves the inputs to a node in the graph. Assume the `node` has
         already been added to the graph.
@@ -96,6 +102,8 @@ class Graph(object):
         Hint: every node has a `.get_parents()` method
         """
         "*** YOUR CODE HERE ***"
+        # print("ra on duty",[self.get_output(parent) for parent in node.get_parents()])
+        return [self.get_output(parent) for parent in node.get_parents()]
 
     def get_output(self, node):
         """
@@ -105,6 +113,8 @@ class Graph(object):
         Returns: a numpy array or a scalar
         """
         "*** YOUR CODE HERE ***"
+        return node.output
+        
 
     def get_gradient(self, node):
         """
@@ -120,6 +130,8 @@ class Graph(object):
         Returns: a numpy array
         """
         "*** YOUR CODE HERE ***"
+        return node.gradient
+        
 
     def add(self, node):
         """
@@ -134,6 +146,13 @@ class Graph(object):
         accumulator for the node, with correct shape.
         """
         "*** YOUR CODE HERE ***"
+        self.nodes.append(node)
+        parents = node.get_parents()
+        inputs = []
+        for parent in parents:
+            inputs.append(self.get_output(parent))
+        node.output = node.forward(inputs) 
+        node.gradient = np.zeros_like(node.output)       
 
     def backprop(self):
         """
@@ -151,6 +170,12 @@ class Graph(object):
         assert np.asarray(self.get_output(loss_node)).ndim == 0
 
         "*** YOUR CODE HERE ***"
+        loss_node.gradient += 1
+        nodes = list(reversed(self.nodes))
+        for node in nodes:
+            parent_grads = node.backward(self.get_inputs(node), node.gradient)
+            for i in range(len(node.get_parents())):
+                node.get_parents()[i].gradient += parent_grads[i]
 
     def step(self, step_size):
         """
@@ -161,6 +186,14 @@ class Graph(object):
         Hint: each Variable has a `.data` attribute
         """
         "*** YOUR CODE HERE ***"
+        for var in self.variables:
+            var.data = var.data - (step_size * var.gradient)
+            # print(var.gradient)
+            # gradient = var.gradient.copy()
+            # value = var.data.copy()
+            # var.data = np.where(gradient > 0, value - (step_size * gradient), value)
+            # value = var.data.copy()
+            # var.data = np.where(gradient < 0, value + (step_size * gradient), value) 
 
 class DataNode(object):
     """
@@ -259,10 +292,12 @@ class Add(FunctionNode):
     @staticmethod
     def forward(inputs):
         "*** YOUR CODE HERE ***"
+        return np.add(inputs[0],inputs[1])
 
     @staticmethod
     def backward(inputs, gradient):
         "*** YOUR CODE HERE ***"
+        return [gradient, gradient]
 
 class MatrixMultiply(FunctionNode):
     """
@@ -277,10 +312,13 @@ class MatrixMultiply(FunctionNode):
     @staticmethod
     def forward(inputs):
         "*** YOUR CODE HERE ***"
+        return np.dot(inputs[0],inputs[1])
 
     @staticmethod
     def backward(inputs, gradient):
         "*** YOUR CODE HERE ***"
+        return [np.dot(gradient,np.transpose(inputs[1])), np.dot(np.transpose(inputs[0]), gradient)]
+        
 
 class MatrixVectorAdd(FunctionNode):
     """
@@ -295,16 +333,18 @@ class MatrixVectorAdd(FunctionNode):
     @staticmethod
     def forward(inputs):
         "*** YOUR CODE HERE ***"
+        return inputs[0]+inputs[1]
 
     @staticmethod
     def backward(inputs, gradient):
         "*** YOUR CODE HERE ***"
+        return [gradient,np.sum(gradient,axis=0)]
 
 class ReLU(FunctionNode):
     """
     An element-wise Rectified Linear Unit nonlinearity: max(x, 0).
     This nonlinearity replaces all negative entries in its input with zeros.
-
+    
     Input: [x]
         x represents either a vector or matrix
     Output: same shape as x, with no negative entries
@@ -313,10 +353,16 @@ class ReLU(FunctionNode):
     @staticmethod
     def forward(inputs):
         "*** YOUR CODE HERE ***"
+        # copy = inputs[0].copy()
+        # copy[copy < 0] = 0
+        # return copy
+        return np.where(inputs[0] >= 0, inputs[0], 0)
 
     @staticmethod
     def backward(inputs, gradient):
         "*** YOUR CODE HERE ***"
+        return [np.where(inputs[0] > 0, gradient, 0)]
+        
 
 class SquareLoss(FunctionNode):
     """
@@ -333,11 +379,16 @@ class SquareLoss(FunctionNode):
     @staticmethod
     def forward(inputs):
         "*** YOUR CODE HERE ***"
+        intermediate = 0.5 * np.power(inputs[0] - inputs[1],2)
+        return np.mean(intermediate)
 
     @staticmethod
     def backward(inputs, gradient):
         "*** YOUR CODE HERE ***"
-
+        num_elems = inputs[0].size
+        temp = (gradient * (inputs[0] - inputs[1]) / num_elems)
+        return [temp, -temp]
+        
 class SoftmaxLoss(FunctionNode):
     """
     A batched softmax loss, used for classification problems.
