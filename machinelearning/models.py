@@ -226,20 +226,22 @@ class DigitClassificationModel(Model):
 
         # Remember to set self.learning_rate!
         # You may use any learning rate that works well for your architecture
-        "* YOUR CODE HERE *"
+        "*** YOUR CODE HERE ***"
+        self.learning_rate = 0.2
+        self.graph = None
 
     def run(self, x, y=None):
         """
         Runs the model for a batch of examples.
 
         The correct labels are known during training, but not at test time.
-        When correct labels are available, y is a (batch_size x 10) numpy
+        When correct labels are available, `y` is a (batch_size x 10) numpy
         array. Each row in the array is a one-hot vector encoding the correct
         class.
 
         Your model should predict a (batch_size x 10) numpy array of scores,
         where higher scores correspond to greater probability of the image
-        belonging to a particular class. You should use nn.SoftmaxLoss as your
+        belonging to a particular class. You should use `nn.SoftmaxLoss` as your
         training loss.
 
         Inputs:
@@ -250,12 +252,42 @@ class DigitClassificationModel(Model):
                 the loss
             (if y is None) A (batch_size x 10) numpy array of scores (aka logits)
         """
-        "* YOUR CODE HERE *"
-
+        "*** YOUR CODE HERE ***"
+        if len(x) == 1:
+            return 0
+        if not self.graph:
+                w1 = nn.Variable(784, 500)          
+                w2 = nn.Variable(500, 500)       
+                w3 = nn.Variable(500, 10)       
+                b1 = nn.Variable(1, 500)
+                b2 = nn.Variable(1, 500)
+                b3 = nn.Variable(1, 10)
+                self.l = [w1,w2,w3,b1,b2,b3]
+                self.graph = nn.Graph(self.l)
+        self.graph = nn.Graph(self.l)
+        input_x = nn.Input(self.graph,x) #Tx784
+        if y is not None: #<--- THIS LITTLE CONDITIONAL SO IMPORTANT HFS
+            input_y = nn.Input(self.graph,y)
+        mult = nn.MatrixMultiply(self.graph, input_x, self.l[0]) #Tx50
+        add = nn.MatrixVectorAdd(self.graph, mult, self.l[3]) 
+        relu = nn.ReLU(self.graph, add)
+        mult2 = nn.MatrixMultiply(self.graph, relu, self.l[1]) #Tx50
+        add2 = nn.MatrixVectorAdd(self.graph, mult2, self.l[4]) #Tx50
+        relu2 = nn.ReLU(self.graph, add2)
+        mult3 = nn.MatrixMultiply(self.graph, relu2, self.l[2]) 
+        add3 = nn.MatrixVectorAdd(self.graph, mult3, self.l[5])
         if y is not None:
-            "* YOUR CODE HERE *"
+            # At training time, the correct output `y` is known.
+            # Here, you should construct a loss node, and return the nn.Graph
+            # that the node belongs to. The loss node must be the last node
+            # added to the graph.
+            loss = nn.SoftmaxLoss(self.graph, add3, input_y)
+            return self.graph
         else:
-            "* YOUR CODE HERE *"
+            # At test time, the correct output is unknown.
+            # You should instead return your model's prediction as a numpy array
+            #print(self.graph.get_output(self.graph.get_nodes()[-1]))
+            return self.graph.get_output(self.graph.get_nodes()[-1])
 
 
 class DeepQModel(Model):
