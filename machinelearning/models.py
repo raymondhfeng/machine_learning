@@ -227,6 +227,7 @@ class DigitClassificationModel(Model):
         # Remember to set self.learning_rate!
         # You may use any learning rate that works well for your architecture
         "* YOUR CODE HERE *"
+	self.learning_rate = 0.05
 
     def run(self, x, y=None):
         """
