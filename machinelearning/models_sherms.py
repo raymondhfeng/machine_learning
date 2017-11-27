@@ -373,7 +373,7 @@ class LanguageIDModel(Model):
         # Remember to set self.learning_rate!
         # You may use any learning rate that works well for your architecture
         "* YOUR CODE HERE *"
-        self.learning_rate = 0.05
+        self.learning_rate = 0.02
         self.graph = None
 
     def run(self, xs, y=None):
@@ -415,26 +415,19 @@ class LanguageIDModel(Model):
         """
         batch_size = xs[0].shape[0]
         if not self.graph:
-            w1 = nn.Variable(47, 47) #         
+            w1 = nn.Variable(47, 47)          
             w2 = nn.Variable(47, 47)
-            w3 = nn.Variable(50, 2)
-            b1 = nn.Variable(1, 47) #
-            b2 = nn.Variable(1, 47) 
-            # b3 = nn.Variable(1, 2) 
+            #w3 = nn.Variable(50, 2)
+            b1 = nn.Variable(1, 47)
+            b2 = nn.Variable(1, 47)
+            #b3 = nn.Variable(1, 2)
             h0 = nn.Variable(1, 47)
 
             w3 = nn.Variable(47, 47)  
-            w4 = nn.Variable(47, 100) # 
-            w6 = nn.Variable(100, 5) #
-            b3 = nn.Variable(1, 47) 
-            b4 = nn.Variable(1, 100) #
-            b6 = nn.Variable(1, 5) # 
-
-            w5 = nn.Variable(47, 47)
-            b5 = nn.Variable(1, 47) 
-            
-            self.l = [w1,w2,b1,b2,h0,w3,w4,b3,b4, w5, b5,w6,b6]
-            #         #     #            #    #           # #
+            w4 = nn.Variable(47, 5)  
+            b3 = nn.Variable(1, 47)  
+            b4 = nn.Variable(1, 5)  
+            self.l = [w1,w2,b1,b2,h0,w3,w4,b3,b4]
         self.graph = nn.Graph(self.l)
         
         
@@ -447,34 +440,26 @@ class LanguageIDModel(Model):
         zero = np.zeros((batch_size, 47))
         zeroInput = nn.Input(self.graph,zero)
         z = nn.MatrixVectorAdd(self.graph, zeroInput, h)
-        h = z
         for i in range(len(xs)):
             char_inputs.append(nn.Input(self.graph, xs[i])) 
-            incorporate = nn.MatrixVectorAdd(self.graph, h, char_inputs[i]) #Tx47 x 
+            incorporate = nn.MatrixVectorAdd(self.graph, z, char_inputs[i]) #Tx47 x 
             mult = nn.MatrixMultiply(self.graph, incorporate, self.l[0]) #Tx47
             add = nn.MatrixVectorAdd(self.graph, mult, self.l[2]) 
             relu = nn.ReLU(self.graph, add)
-            # mult2 = nn.MatrixMultiply(self.graph, relu, self.l[1]) #Tx47
-            # add2 = nn.MatrixVectorAdd(self.graph, mult2, self.l[3]) #Tx47
-            # relu2 = nn.ReLU(self.graph, add2)
-            # mult3 = nn.MatrixMultiply(self.graph, relu2, self.l[9]) #Tx47
-            # add3 = nn.MatrixVectorAdd(self.graph, mult3, self.l[10]) #Tx47
-            # relu3 = nn.ReLU(self.graph, add3)
-            h = relu
-        # mult = nn.MatrixMultiply(self.graph, h, self.l[5]) #Tx47
-        # add = nn.MatrixVectorAdd(self.graph, mult, self.l[7]) #Tx47
-        # relu = nn.ReLU(self.graph, add)
-        mult2 = nn.MatrixMultiply(self.graph, h, self.l[6]) #Tx5
+            mult2 = nn.MatrixMultiply(self.graph, relu, self.l[1]) #Tx47
+            add2 = nn.MatrixVectorAdd(self.graph, mult2, self.l[3]) #Tx47
+            relu2 = nn.ReLU(self.graph, add2)
+            h = relu2
+
+        mult = nn.MatrixMultiply(self.graph, h, self.l[5]) #Tx47
+        add = nn.MatrixVectorAdd(self.graph, mult, self.l[7]) #Tx47
+        relu = nn.ReLU(self.graph, add)
+        mult2 = nn.MatrixMultiply(self.graph, relu, self.l[6]) #Tx5
         add2 = nn.MatrixVectorAdd(self.graph, mult2, self.l[8]) #Tx5
-        relu2 = nn.ReLU(self.graph, add2)
-        mult3 = nn.MatrixMultiply(self.graph, relu2, self.l[11]) #Tx5
-        add3 = nn.MatrixVectorAdd(self.graph, mult3, self.l[12]) #Tx5
         if y is not None:
             "* YOUR CODE HERE *"
- 
-            input_y = nn.Input(self.graph, y) #Tx5
-            #print(self.graph.get_output(input_y))
-            loss = nn.SoftmaxLoss(self.graph, add3, input_y)
+            input_y = nn.Input(self.graph, y) #Tx4
+            loss = nn.SoftmaxLoss(self.graph, add2, input_y)
             return self.graph
         else:
             "* YOUR CODE HERE *"

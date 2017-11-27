@@ -16,10 +16,10 @@ class Model(object):
         """
         Train the model.
 
-        get_data_and_monitor will yield data points one at a time. In between
+        `get_data_and_monitor` will yield data points one at a time. In between
         yielding data points, it will also monitor performance, draw graphics,
         and assist with automated grading. The model (self) is passed as an
-        argument to get_data_and_monitor, which allows the monitoring code to
+        argument to `get_data_and_monitor`, which allows the monitoring code to
         evaluate the model on examples from the validation set.
         """
         for x, y in self.get_data_and_monitor(self):
@@ -39,7 +39,7 @@ class RegressionModel(Model):
 
         # Remember to set self.learning_rate!
         # You may use any learning rate that works well for your architecture
-        "* YOUR CODE HERE *"
+        "*** YOUR CODE HERE ***"
         self.learning_rate = 0.5
         self.graph = None
 
@@ -47,9 +47,9 @@ class RegressionModel(Model):
         """
         Runs the model for a batch of examples.
 
-        The correct outputs y are known during training, but not at test time.
-        If correct outputs y are provided, this method must construct and
-        return a nn.Graph for computing the training loss. If y is None, this
+        The correct outputs `y` are known during training, but not at test time.
+        If correct outputs `y` are provided, this method must construct and
+        return a nn.Graph for computing the training loss. If `y` is None, this
         method must instead return predicted y-values.
 
         Inputs:
@@ -62,9 +62,9 @@ class RegressionModel(Model):
 
         Note: DO NOT call backprop() or step() inside this method!
         """
-        "* YOUR CODE HERE *"
+        "*** YOUR CODE HERE ***"
         if y is not None:
-            # At training time, the correct output y is known.
+            # At training time, the correct output `y` is known.
             # Here, you should construct a loss node, and return the nn.Graph
             # that the node belongs to. The loss node must be the last node
             # added to the graph.
@@ -129,8 +129,8 @@ class OddRegressionModel(Model):
         
         # Remember to set self.learning_rate!
         # You may use any learning rate that works well for your architecture
-        "* YOUR CODE HERE *"
-        self.learning_rate = 0.1
+        "*** YOUR CODE HERE ***"
+        self.learning_rate = 0.01
         self.graph = None
         self.l = []
 
@@ -138,9 +138,9 @@ class OddRegressionModel(Model):
         """
         Runs the model for a batch of examples.
 
-        The correct outputs y are known during training, but not at test time.
-        If correct outputs y are provided, this method must construct and
-        return a nn.Graph for computing the training loss. If y is None, this
+        The correct outputs `y` are known during training, but not at test time.
+        If correct outputs `y` are provided, this method must construct and
+        return a nn.Graph for computing the training loss. If `y` is None, this
         method must instead return predicted y-values.
 
         Inputs:
@@ -153,8 +153,10 @@ class OddRegressionModel(Model):
 
         Note: DO NOT call backprop() or step() inside this method!
         """
-        "* YOUR CODE HERE *"
+        "*** YOUR CODE HERE ***"
         n = 4
+        if len(x) == 1:
+            return 0
         if not self.graph:
                 w1 = nn.Variable(1, 50)          
                 w2 = nn.Variable(50, 50)
@@ -192,7 +194,7 @@ class OddRegressionModel(Model):
         sub = nn.MatrixVectorAdd(self.graph, ad, sb) #g(x) - g(-x)
             
         if y is not None:
-            # At training time, the correct output y is known.
+            # At training time, the correct output `y` is known.
             # Here, you should construct a loss node, and return the nn.Graph
             # that the node belongs to. The loss node must be the last node
             # added to the graph.
@@ -203,8 +205,6 @@ class OddRegressionModel(Model):
             # You should instead return your model's prediction as a numpy array
             #print(self.graph.get_output(self.graph.get_nodes()[-1]))
             return self.graph.get_output(self.graph.get_nodes()[-1])
-            
-              
 
 class DigitClassificationModel(Model):
     """
@@ -226,20 +226,22 @@ class DigitClassificationModel(Model):
 
         # Remember to set self.learning_rate!
         # You may use any learning rate that works well for your architecture
-        "* YOUR CODE HERE *"
+        "*** YOUR CODE HERE ***"
+        self.learning_rate = 0.2
+        self.graph = None
 
     def run(self, x, y=None):
         """
         Runs the model for a batch of examples.
 
         The correct labels are known during training, but not at test time.
-        When correct labels are available, y is a (batch_size x 10) numpy
+        When correct labels are available, `y` is a (batch_size x 10) numpy
         array. Each row in the array is a one-hot vector encoding the correct
         class.
 
         Your model should predict a (batch_size x 10) numpy array of scores,
         where higher scores correspond to greater probability of the image
-        belonging to a particular class. You should use nn.SoftmaxLoss as your
+        belonging to a particular class. You should use `nn.SoftmaxLoss` as your
         training loss.
 
         Inputs:
@@ -250,12 +252,42 @@ class DigitClassificationModel(Model):
                 the loss
             (if y is None) A (batch_size x 10) numpy array of scores (aka logits)
         """
-        "* YOUR CODE HERE *"
-
+        "*** YOUR CODE HERE ***"
+        if len(x) == 1:
+            return 0
+        if not self.graph:
+                w1 = nn.Variable(784, 500)          
+                w2 = nn.Variable(500, 500)       
+                w3 = nn.Variable(500, 10)       
+                b1 = nn.Variable(1, 500)
+                b2 = nn.Variable(1, 500)
+                b3 = nn.Variable(1, 10)
+                self.l = [w1,w2,w3,b1,b2,b3]
+                self.graph = nn.Graph(self.l)
+        self.graph = nn.Graph(self.l)
+        input_x = nn.Input(self.graph,x) #Tx784
+        if y is not None: #<--- THIS LITTLE CONDITIONAL SO IMPORTANT HFS
+            input_y = nn.Input(self.graph,y)
+        mult = nn.MatrixMultiply(self.graph, input_x, self.l[0]) #Tx50
+        add = nn.MatrixVectorAdd(self.graph, mult, self.l[3]) 
+        relu = nn.ReLU(self.graph, add)
+        mult2 = nn.MatrixMultiply(self.graph, relu, self.l[1]) #Tx50
+        add2 = nn.MatrixVectorAdd(self.graph, mult2, self.l[4]) #Tx50
+        relu2 = nn.ReLU(self.graph, add2)
+        mult3 = nn.MatrixMultiply(self.graph, relu2, self.l[2]) 
+        add3 = nn.MatrixVectorAdd(self.graph, mult3, self.l[5])
         if y is not None:
-            "* YOUR CODE HERE *"
+            # At training time, the correct output `y` is known.
+            # Here, you should construct a loss node, and return the nn.Graph
+            # that the node belongs to. The loss node must be the last node
+            # added to the graph.
+            loss = nn.SoftmaxLoss(self.graph, add3, input_y)
+            return self.graph
         else:
-            "* YOUR CODE HERE *"
+            # At test time, the correct output is unknown.
+            # You should instead return your model's prediction as a numpy array
+            #print(self.graph.get_output(self.graph.get_nodes()[-1]))
+            return self.graph.get_output(self.graph.get_nodes()[-1])
 
 
 class DeepQModel(Model):
@@ -275,7 +307,7 @@ class DeepQModel(Model):
 
         # Remember to set self.learning_rate!
         # You may use any learning rate that works well for your architecture
-        "* YOUR CODE HERE *"
+        "*** YOUR CODE HERE ***"
         self.learning_rate = 0.01
         self.graph = None
 
@@ -304,7 +336,7 @@ class DeepQModel(Model):
             (if Q_target is None) A (batch_size x 2) numpy array of Q-value
                 scores, for the two actions
         """
-        "* YOUR CODE HERE *"
+        "*** YOUR CODE HERE ***"
         if not self.graph:
             w1 = nn.Variable(4, 50)          
             w2 = nn.Variable(50, 50)
@@ -327,11 +359,11 @@ class DeepQModel(Model):
         mult3 = nn.MatrixMultiply(self.graph, relu2, self.l[2]) #Tx1
         add3 = nn.MatrixVectorAdd(self.graph, mult3, self.l[5])
         if Q_target is not None:
-            "* YOUR CODE HERE *"
+            "*** YOUR CODE HERE ***"
             loss = nn.SquareLoss(self.graph, add3, input_y)
             return self.graph
         else:
-            "* YOUR CODE HERE *"
+            "*** YOUR CODE HERE ***"
             return self.graph.get_output(self.graph.get_nodes()[-1])
 
     def get_action(self, state, eps):
@@ -372,7 +404,7 @@ class LanguageIDModel(Model):
 
         # Remember to set self.learning_rate!
         # You may use any learning rate that works well for your architecture
-        "* YOUR CODE HERE *"
+        "*** YOUR CODE HERE ***"
         self.learning_rate = 0.05
         self.graph = None
 
@@ -383,7 +415,7 @@ class LanguageIDModel(Model):
         Although words have different lengths, our data processing guarantees
         that within a single batch, all words will be of the same length (L).
 
-        Here xs will be a list of length L. Each element of xs will be a
+        Here `xs` will be a list of length L. Each element of `xs` will be a
         (batch_size x self.num_chars) numpy array, where every row in the array
         is a one-hot vector encoding of a character. For example, if we have a
         batch of 8 three-letter words where the last word is "cat", we will have
@@ -391,16 +423,16 @@ class LanguageIDModel(Model):
         is the inital (0th) letter of our combined alphabet for this task.
 
         The correct labels are known during training, but not at test time.
-        When correct labels are available, y is a (batch_size x 5) numpy
+        When correct labels are available, `y` is a (batch_size x 5) numpy
         array. Each row in the array is a one-hot vector encoding the correct
         class.
 
         Your model should use a Recurrent Neural Network to summarize the list
-        xs into a single node that represents a (batch_size x hidden_size)
+        `xs` into a single node that represents a (batch_size x hidden_size)
         array, for your choice of hidden_size. It should then calculate a
         (batch_size x 5) numpy array of scores, where higher scores correspond
         to greater probability of the word originating from a particular
-        language. You should use nn.SoftmaxLoss as your training loss.
+        language. You should use `nn.SoftmaxLoss` as your training loss.
 
         Inputs:
             xs: a list with L elements (one per character), where each element
@@ -413,69 +445,135 @@ class LanguageIDModel(Model):
 
         Hint: you may use the batch_size variable in your code
         """
+        # batch_size = xs[0].shape[0]
+        # if not self.graph:
+        #     w1 = nn.Variable(47, 47)          
+        #     w2 = nn.Variable(47, batch_size)
+        #     b1 = nn.Variable(1, 47)
+        #     b2 = nn.Variable(1, 47)
+
+        #     h0 = nn.Variable(batch_size, batch_size)
+
+        #     w3 = nn.Variable(batch_size, 100)  
+        #     w4 = nn.Variable(100, 5)  
+        #     b3 = nn.Variable(1, 100)  
+        #     b4 = nn.Variable(1, 5)  
+        #     self.l = [w1,w2,b1,b2,h0,w3,w4,b3,b4]
+        # self.graph = nn.Graph(self.l)
+
+        # "*** YOUR CODE HERE ***"
+        # char_inputs = []
+        # h = self.l[4]
+        # for i in range(len(xs)):
+        #     # if xs[i].shape[0] != batch_size
+        #     char_inputs.append(nn.Input(self.graph, xs[i]))
+        #     print("char dim", xs[i].shape)
+        #     mult = nn.MatrixMultiply(self.graph, h, char_inputs[i]) #batch_size x 47
+        #     add = nn.MatrixVectorAdd(self.graph, mult, self.l[2]) #batch_size x 47
+        #     relu = nn.ReLU(self.graph, add) 
+        #     mult2 = nn.MatrixMultiply(self.graph, relu, self.l[0]) #batch x 47
+        #     add2 = nn.MatrixVectorAdd(self.graph, mult2, self.l[3]) #batch x 47
+        #     relu2 = nn.ReLU(self.graph, add2)
+        #     incorporate = nn.MatrixMultiply(self.graph, relu2, self.l[1]) #batch x batch
+        #     h = incorporate
+
+        # mult = nn.MatrixMultiply(self.graph, h, self.l[5]) #batch x 100
+        # add = nn.MatrixVectorAdd(self.graph, mult, self.l[7]) #batch x 100
+        # relu = nn.ReLU(self.graph, add)
+        # mult2 = nn.MatrixMultiply(self.graph, relu, self.l[6]) #batch x 5
+        # add2 = nn.MatrixVectorAdd(self.graph, mult2, self.l[8]) #batch x 5
+
+        # if y is not None:
+        #     "*** YOUR CODE HERE ***"
+        #     input_y = nn.Input(self.graph, y) #batch x 5
+        #     loss = nn.SoftmaxLoss(self.graph, add2, input_y) #a number
+        #     return self.graph
+        # else:
+        #     "*** YOUR CODE HERE ***"
+        #     return self.graph.get_output(self.graph.get_nodes()[-2])
+
         batch_size = xs[0].shape[0]
         if not self.graph:
-            w1 = nn.Variable(47, 47) #         
-            w2 = nn.Variable(47, 47)
-            w3 = nn.Variable(50, 2)
-            b1 = nn.Variable(1, 47) #
-            b2 = nn.Variable(1, 47) 
-            # b3 = nn.Variable(1, 2) 
+            w1 = nn.Variable(47, 100)          
+            w2 = nn.Variable(100, 47)
+            b1 = nn.Variable(1, 100)
+            b2 = nn.Variable(1, 47)
+
             h0 = nn.Variable(1, 47)
 
             w3 = nn.Variable(47, 47)  
-            w4 = nn.Variable(47, 100) # 
-            w6 = nn.Variable(100, 5) #
-            b3 = nn.Variable(1, 47) 
-            b4 = nn.Variable(1, 100) #
-            b6 = nn.Variable(1, 5) # 
-
-            w5 = nn.Variable(47, 47)
-            b5 = nn.Variable(1, 47) 
-            
-            self.l = [w1,w2,b1,b2,h0,w3,w4,b3,b4, w5, b5,w6,b6]
-            #         #     #            #    #           # #
+            w4 = nn.Variable(47, 5)  
+            b3 = nn.Variable(1, 47)  
+            b4 = nn.Variable(1, 5)  
+            self.l = [w1,w2,b1,b2,h0,w3,w4,b3,b4]
         self.graph = nn.Graph(self.l)
-        
-        
-        
- 
 
-        "* YOUR CODE HERE *"
-        char_inputs = [] 
+        "*** YOUR CODE HERE ***"
+        char_inputs = []
         h = self.l[4]
-        zero = np.zeros((batch_size, 47))
-        zeroInput = nn.Input(self.graph,zero)
-        z = nn.MatrixVectorAdd(self.graph, zeroInput, h)
-        h = z
         for i in range(len(xs)):
-            char_inputs.append(nn.Input(self.graph, xs[i])) 
-            incorporate = nn.MatrixVectorAdd(self.graph, h, char_inputs[i]) #Tx47 x 
-            mult = nn.MatrixMultiply(self.graph, incorporate, self.l[0]) #Tx47
+            print(self.l[4].data.shape)
+            char_inputs.append(nn.Input(self.graph, xs[i]))
+            incorporate = nn.MatrixVectorAdd(self.graph, h, char_inputs[i]) #Tx47
+            mult = nn.MatrixMultiply(self.graph, incorporate, self.l[0]) #Tx100
             add = nn.MatrixVectorAdd(self.graph, mult, self.l[2]) 
             relu = nn.ReLU(self.graph, add)
-            # mult2 = nn.MatrixMultiply(self.graph, relu, self.l[1]) #Tx47
-            # add2 = nn.MatrixVectorAdd(self.graph, mult2, self.l[3]) #Tx47
-            # relu2 = nn.ReLU(self.graph, add2)
-            # mult3 = nn.MatrixMultiply(self.graph, relu2, self.l[9]) #Tx47
-            # add3 = nn.MatrixVectorAdd(self.graph, mult3, self.l[10]) #Tx47
-            # relu3 = nn.ReLU(self.graph, add3)
-            h = relu
-        # mult = nn.MatrixMultiply(self.graph, h, self.l[5]) #Tx47
-        # add = nn.MatrixVectorAdd(self.graph, mult, self.l[7]) #Tx47
-        # relu = nn.ReLU(self.graph, add)
-        mult2 = nn.MatrixMultiply(self.graph, h, self.l[6]) #Tx5
+            mult2 = nn.MatrixMultiply(self.graph, relu, self.l[1]) #Tx47
+            add2 = nn.MatrixVectorAdd(self.graph, mult2, self.l[3]) #Tx47
+            relu2 = nn.ReLU(self.graph, add2)
+            h = relu2
+
+        result = h
+        for i in range(47):
+            result = np.stack(result, h)
+
+        mult = nn.MatrixMultiply(self.graph, h, self.l[5]) #Tx47
+        add = nn.MatrixVectorAdd(self.graph, mult, self.l[7]) #Tx47
+        relu = nn.ReLU(self.graph, add)
+        mult2 = nn.MatrixMultiply(self.graph, relu, self.l[6]) #Tx5
         add2 = nn.MatrixVectorAdd(self.graph, mult2, self.l[8]) #Tx5
-        relu2 = nn.ReLU(self.graph, add2)
-        mult3 = nn.MatrixMultiply(self.graph, relu2, self.l[11]) #Tx5
-        add3 = nn.MatrixVectorAdd(self.graph, mult3, self.l[12]) #Tx5
+
         if y is not None:
-            "* YOUR CODE HERE *"
- 
-            input_y = nn.Input(self.graph, y) #Tx5
-            #print(self.graph.get_output(input_y))
-            loss = nn.SoftmaxLoss(self.graph, add3, input_y)
+            "*** YOUR CODE HERE ***"
+            input_y = nn.Input(self.graph, y) #Tx4
+            loss = nn.SoftmaxLoss(self.graph, add2, input_y)
             return self.graph
         else:
-            "* YOUR CODE HERE *"
+            "*** YOUR CODE HERE ***"
             return self.graph.get_output(self.graph.get_nodes()[-1])
+
+
+
+ # #RAYS NEURAL NETWORK OF DESTINY 
+ #        #Takes in (batch=47xhidden=50) and spits out (batch=47x5)
+ #        w1 = nn.Variable(50, 100)          
+ #        w2 = nn.Variable(100, 100)       
+ #        w3 = nn.Variable(100, 5)       
+ #        b1 = nn.Variable(1, 100)
+ #        b2 = nn.Variable(1, 100)
+ #        b3 = nn.Variable(1, 5)
+ #        self.l = [w1,w2,w3,b1,b2,b3]
+ #        self.graph = nn.Graph(self.l)
+ #        input_x = nn.Input(self.graph,x) 
+ #        if y is not None: #<--- THIS LITTLE CONDITIONAL SO IMPORTANT HFS
+ #            input_y = nn.Input(self.graph,y)
+ #        mult = nn.MatrixMultiply(self.graph, input_x, self.l[0]) #Tx50
+ #        add = nn.MatrixVectorAdd(self.graph, mult, self.l[3]) 
+ #        relu = nn.ReLU(self.graph, add)
+ #        mult2 = nn.MatrixMultiply(self.graph, relu, self.l[1]) #Tx50
+ #        add2 = nn.MatrixVectorAdd(self.graph, mult2, self.l[4]) #Tx50
+ #        relu2 = nn.ReLU(self.graph, add2)
+ #        mult3 = nn.MatrixMultiply(self.graph, relu2, self.l[2]) 
+ #        add3 = nn.MatrixVectorAdd(self.graph, mult3, self.l[5])
+ #        if y is not None:
+ #            # At training time, the correct output `y` is known.
+ #            # Here, you should construct a loss node, and return the nn.Graph
+ #            # that the node belongs to. The loss node must be the last node
+ #            # added to the graph.
+ #            loss = nn.SoftmaxLoss(self.graph, add3, input_y)
+ #            return self.graph
+ #        else:
+ #            # At test time, the correct output is unknown.
+ #            # You should instead return your model's prediction as a numpy array
+ #            #print(self.graph.get_output(self.graph.get_nodes()[-1]))
+ #            return self.graph.get_output(self.graph.get_nodes()[-1])
