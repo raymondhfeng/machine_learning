@@ -406,7 +406,7 @@ class LanguageIDModel(Model):
         # Remember to set self.learning_rate!
         # You may use any learning rate that works well for your architecture
         "* YOUR CODE HERE *"
-        self.learning_rate = 0.05
+        self.learning_rate = 0.03
         self.graph = None
 
     def run(self, xs, y=None):
