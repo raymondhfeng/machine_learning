@@ -405,7 +405,7 @@ class LanguageIDModel(Model):
         # Remember to set self.learning_rate!
         # You may use any learning rate that works well for your architecture
         "* YOUR CODE HERE *"
-        self.learning_rate = 0.05
+        self.learning_rate = 0.029
         self.graph = None
 
     def run(self, xs, y=None):
@@ -447,6 +447,7 @@ class LanguageIDModel(Model):
         """
         batch_size = xs[0].shape[0]
         if not self.graph:
+            dim = 128
             w1 = nn.Variable(47, 47) #         
             w2 = nn.Variable(47, 47)
             w3 = nn.Variable(50, 2)
@@ -456,10 +457,10 @@ class LanguageIDModel(Model):
             h0 = nn.Variable(1, 47)
 
             w3 = nn.Variable(47, 47)  
-            w4 = nn.Variable(47, 100) # 
-            w6 = nn.Variable(100, 5) #
+            w4 = nn.Variable(47, dim) # 
+            w6 = nn.Variable(dim, 5) #
             b3 = nn.Variable(1, 47) 
-            b4 = nn.Variable(1, 100) #
+            b4 = nn.Variable(1, dim) #
             b6 = nn.Variable(1, 5) # 
 
             w5 = nn.Variable(47, 47)
